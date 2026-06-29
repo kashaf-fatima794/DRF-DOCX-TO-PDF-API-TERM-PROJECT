@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Word to PDF Converter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, rgba(168, 139, 225, 0.75) 0%, rgba(255, 131, 211, 0.75) 100%), 
+                        url('/media/bg.jpeg') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .outer-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 25px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); 
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .inner-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 35px 30px;
+            border-radius: 18px;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        
+        h1 {
+            color: #7c53d1;
+            margin-bottom: 10px;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .drop-zone {
+            background: #fdf8ff;
+            padding: 40px 20px;
+            border-radius: 14px;
+            color: #7c53d1;
+            cursor: pointer;
+            position: relative;
+            margin-bottom: 25px;
+            border: 2.5px dashed #a88be1;
+            box-shadow: 0 4px 10px rgba(168, 139, 225, 0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .drop-zone.dragover {
+            border-color: #ff83d3;
+            background: #f6eeff;
+            transform: scale(1.03);
+            box-shadow: 0 8px 20px rgba(168, 139, 225, 0.2);
+        }
+        
+        .drop-zone input[type="file"] { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; 
+        }
+        
+        .file-label { color: #555; font-size: 15px; line-height: 1.5; }
+        .file-label .browse-link { color: #7c53d1; text-decoration: none; font-weight: bold; border-bottom: 2px solid #a88be1; }
+        
+        .file-icon-preview {
+            font-size: 42px;
+            margin-bottom: 12px;
+            display: none;
+            color: #ff83d3;
+            animation: bounce 1s infinite alternate;
+        }
+
+  
+        .btn {
+            background: linear-gradient(135deg, #a88be1 0%, #8e6cd4 100%);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(142, 108, 212, 0.35);
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #9575d4 0%, #7652bf 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(142, 108, 212, 0.45);
+        }
+
+        .loading-container {
+            display: none;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .progress-text {
+            color: #7c53d1;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-wrapper {
+            background: #eee;
+            border-radius: 20px;
+            overflow: hidden;
+            height: 10px;
+            width: 100%;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #a88be1, #ff83d3);
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+            animation: progressSimulate 5s infinite linear;
+        }
+
+    
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
+
+        @keyframes progressSimulate {
+            0% { width: 0%; }
+            20% { width: 35%; }
+            50% { width: 75%; }
+            80% { width: 92%; }
+            100% { width: 98%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="outer-container">
+        <div class="inner-card">
+            <h1>DOCX TO PDF</h1>
+            <p class="subtitle">Convert files securely with instant desktop download</p>
+            
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                
+                <div class="drop-zone" id="dropZone">
+                    <div class="file-icon-preview" id="fileIcon">📄</div>
+                    <span class="file-label" id="fileNameDisplay">
+                        Drag and drop your Word file here or <span class="browse-link">browse file</span>
+                    </span>
+                    <input type="file" name="file" accept=".docx" id="fileInput">
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">Convert & Download</button>
+                
+                <div class="loading-container" id="loadingContainer">
+                    <p class="progress-text">Processing document transformation...</p>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar-fill"></div>
+                    </div>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const dropZone = document.getElementById('dropZone');
+        const fileIcon = document.getElementById('fileIcon');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const uploadForm = document.getElementById('uploadForm');
+
+        function handleFileSelection(fileName) {
+            fileIcon.style.display = "block";
+            fileNameDisplay.innerHTML = "Selected Target: <br><b style='color:#7c53d1; word-break:break-all;'>" + fileName + "</b>";
+            dropZone.style.borderColor = "#ff83d3";
+            dropZone.style.background = "#fff6fc";
+        }
+
+        
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                handleFileSelection(fileInput.files[0].name);
+            }
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                const fileName = files[0].name;
+                if (fileName.toLowerCase().endsWith('.docx')) {
+                    fileInput.files = files;
+                    handleFileSelection(fileName);
+                } else {
+                    alert("Invalid format! Please upload a valid .docx file.");
+                    fileInput.value = "";
+                }
+            }
+        });
+
+        uploadForm.addEventListener('submit', function(e) {
+            if (fileInput.files.length === 0) {
+                e.preventDefault();
+                alert("Please add a .docx file first!");
+                return;
+            }
+            
+            submitBtn.style.display = "none";
+            loadingContainer.style.display = "block";
+            
+            setTimeout(() => {
+                setTimeout(() => {
+                    submitBtn.style.display = "block";
+                    loadingContainer.style.display = "none";
+                }, 8000);
+            }, 100);
+        });
+    </script>
+</body>
+</html>
